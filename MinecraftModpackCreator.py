@@ -45,7 +45,7 @@ f=open("{0}/manifest.json".format(manifest["name"]),"w")
 f.write(json.dumps(manifest))
 f.close()
 
-print("请在{0}/{1}/{2}放入您需要添加在整合包内的内容，目录结构和.minecraft相同\n添加好后按回车键开始制作整合包……".format(os.getcwd(),manifest["name"],manifest["overrides"]))
+print("请在{0}/{1}/{2}放入您需要添加在整合包内的内容，目录结构见项目README.md\n添加好后按回车键开始制作整合包……".format(os.getcwd(),manifest["name"],manifest["overrides"]))
 input()
 
 modPack=zipfile.ZipFile("{0}.zip".format(manifest["name"]),"w")
