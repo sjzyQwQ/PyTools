@@ -32,8 +32,8 @@ manifest["files"]=[]
 
 # 以下可选（添加后可以从CurseForge下载Mod，减小整合包占用空间，不需要请将其注释）
 manifest["files"].append({})
-manifest["files"][0]["projectID"]=0
-manifest["files"][0]["fileID"]=0
+manifest["files"][0]["projectID"]=306612
+manifest["files"][0]["fileID"]=4356471
 manifest["files"][0]["required"]=True
 
 if os.path.exists("{0}".format(manifest["name"]))==False:
@@ -42,7 +42,7 @@ if os.path.exists("{0}/{1}".format(manifest["name"],manifest["overrides"]))==Fal
     os.mkdir("{0}/{1}".format(manifest["name"],manifest["overrides"]))
 
 f=open("{0}/manifest.json".format(manifest["name"]),"w")
-f.write(json.dumps(manifest))
+f.write(json.dumps(manifest,ensure_ascii=False))
 f.close()
 
 print("请在{0}/{1}/{2}放入您需要添加在整合包内的内容，目录结构见项目README.md\n添加好后按回车键开始制作整合包……".format(os.getcwd(),manifest["name"],manifest["overrides"]))
