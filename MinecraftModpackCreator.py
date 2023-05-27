@@ -53,8 +53,10 @@ os.chdir("{0}".format(manifest["name"]))
 for root,dir,file in os.walk("."):
     if len(file)>0:
         for i in file:
+            print("Writing {0}/{1}".format(root,i))
             modPack.write("{0}/{1}".format(root,i))
     else:
+        print("Writing {0}".format(root))
         modPack.write("{0}".format(root))
 modPack.close()
 os.chdir("..")
