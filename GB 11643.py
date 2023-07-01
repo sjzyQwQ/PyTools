@@ -4,14 +4,15 @@ This Python file is edited by Misaka10072
 Last modified: 2023/6/30
 GitHub: https://github.com/sjzyQwQ/PyTools
 '''
+
 import random
 import datetime
 
 a=['1','0','X','9','8','7','6','5','4','3','2']
 
 while True:
-    GB2260 = int(input("请输入6位数字地址码（符合GB 2260规范，本程序将不会检验本数字是否正确，请自行确认）："))
-    if GB2260 >= 100000 and GB2260 < 830000:
+    GBT2260 = int(input("请输入6位数字地址码（符合GB/T 2260规范，本程序将不会检验本数字是否正确，请自行确认）："))
+    if GBT2260 >= 100000 and GBT2260 < 830000:
         break
 
 year = random.randint(1970, datetime.datetime.today().year)
@@ -28,7 +29,7 @@ else:
 
 Sequential_code = random.randint(1, 999)
 
-GB11643 = str(GB2260) + str(year) + (str(month) if month > 9 else '0' + str(month)) + (str(day) if day > 9 else '0' + str(day))
+GB11643 = str(GBT2260) + str(year) + (str(month) if month > 9 else '0' + str(month)) + (str(day) if day > 9 else '0' + str(day))
 if Sequential_code < 10:
     GB11643 += '00' + str(Sequential_code)
 elif Sequential_code < 100:
@@ -36,7 +37,7 @@ elif Sequential_code < 100:
 else:
     GB11643 += str(Sequential_code)
 
-MOD11=(GB2260//100000*7+GB2260//10000%10*9+GB2260//1000%10*10+GB2260//100%10*5+GB2260//10%10*8+GB2260%10*4\
+MOD11=(GBT2260//100000*7+GBT2260//10000%10*9+GBT2260//1000%10*10+GBT2260//100%10*5+GBT2260//10%10*8+GBT2260%10*4\
     +year//1000*2+year//100%10*1+year//10%10*6+year%10*3\
     +month//10*7+month%10*9\
     +day//10*10+day%10*5\

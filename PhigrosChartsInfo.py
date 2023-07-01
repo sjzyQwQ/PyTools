@@ -1,3 +1,10 @@
+'''
+Phigros Charts Info
+This Python file is edited by Misaka10072
+Last modified: 2023/5/27
+GitHub: https://github.com/sjzyQwQ/PyTools
+'''
+
 import os
 import json
 
