@@ -63,11 +63,11 @@ def MEDAL_FETCH_BY_CLASSROOM(cid):
 
 
 def SET_MEDAL(type, performanceId, studentId, classId):  # 发送点评
-    if type == "STUDENT_SINGLE":
+    if type == "STUDENT_SINGLE":  # 单人
         requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_SET_MEDAL_SINGLE","params":{"performanceId":"' + performanceId + '","studentId":"' + studentId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
-    elif type == "STUDENT_MULTI":
+    elif type == "STUDENT_MULTI":  # 多人
         requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_SET_MEDAL_MULTI","params":{"performanceId":"' + performanceId + '","studentsId":"' + studentId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})  # 用","连接多个studentId
-    elif type == "CLASSROOM":
+    elif type == "CLASSROOM":  # 全班
         requests.post("https://care.seewo.com/app/apis.json", data='{"action":"CLASSROOM_SET_MEDAL","params":{"performanceId":"' + performanceId + '","classId":"' + classId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
 
 
@@ -81,33 +81,33 @@ def analyseReport(report):  # 解析获得的点评数据
         return False
     else:
         for i in range(len(report["detail"])):
-            print("{} {} {}% {}{}分".format(report["detail"][i]["name"], "表扬" if report["detail"][i]["type"] == 1 else "待改进", report["detail"][i]["percentages"], "+" if report["detail"][i]["type"] == 1 else "-", report["detail"][i]["score"]))
+            print("{} {} {}% {}{}分".format(report["detail"][i]["name"], "表扬" if report["detail"][i]["type"] == 1 else "待改进", report["detail"][i]["percentages"], "+" if report["detail"][i]["type"] == 1 else "-", report["detail"][i]["score"]))  # {点评名称} {点评类型} {百分比}% {分数类型}{分数数值}分
         return True
 
 
-def analysePerformance(perfomance):
+def analysePerformance(perfomance):  # 解析点评记录列表
     for i in range(len(perfomance)):
         print("{}. {}{}分 {}给{}, 因为{}\t{} 由{}老师点评 {}".format(i + 1, "+" if perfomance[i]["type"] == 1 else "-", perfomance[i]["value"], "表扬" if perfomance[i]["type"] == 1 else "批评", perfomance[i]["studentName"], perfomance[i]["name"], time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(perfomance[i]["postedAt"] / 1000)), perfomance[i]["teacherName"], perfomance[i]["studentName"]))
 
 
-def listStudent(students, includeClass=False):
-    if includeClass == True:
+def listStudent(students, includeClass=False):  # 显示班级学生 (支持选择是否包含全班)
+    if includeClass == True:  # 显示全班
         print("0.全班\t\t", end='')
         displayedNum = 1
-    else:
+    else:  # 不显示
         displayedNum = 0
     for i in range(len(students)):
-        print("{}. {}{}\t".format(i + 1, students[i]["studentName"], "\t" if (len(students[i]["studentName"]) < 3 and i < 10) else ''), end='')
+        print("{}. {}{}\t".format(i + 1, students[i]["studentName"], "\t" if (len(students[i]["studentName"]) < 3 and i < 10) else ''), end='')  # {序号}. {姓名}
         displayedNum += 1
         if displayedNum == 7:  # 一行显示七人
-            print()
-            displayedNum = 0
+            print()  # 换行
+            displayedNum = 0  # 显示满七人，重置计数器
         elif displayedNum != 7 and i == len(students) - 1:
-            print()
+            print()  # 换行
 
 
 def classReport(referer="", sNum=0):
-    def classPerformance():
+    def classPerformance():  # 班级表现
         while True:
             print("时间范围：\n\t1. 今天\t2.本周\t3.上周\t4.本月\t5.自定义\n\t0.返回上一级")
             slct = int(input("请输入所要查看的时间范围：") or -1)
@@ -173,7 +173,7 @@ def classReport(referer="", sNum=0):
                     else:
                         print("输入的功能序号无效, 请重试! ")
 
-    def studentPerformance():
+    def studentPerformance():  # 个人表现
         while True:
             print("时间范围：\n\t1. 今天\t2.本周\t3.上周\t4.本月\t5.自定义\n\t0.返回上一级")
             slct = int(input("请输入所要查看的时间范围：") or -1)
@@ -249,18 +249,18 @@ def classReport(referer="", sNum=0):
 while True:  # 等待输入正确的班级序号
     print("\033c", end='')  # 清屏
 
-    classrooms = CLASSROOM_FETCH()
+    classrooms = CLASSROOM_FETCH()  # 拉取班级列表
 
     for i in range(len(classrooms)):
-        print("{}. {} ({}) 班主任: {}".format(i + 1, classrooms[i]["classNickName"], classrooms[i]["invitationCode"], classrooms[i]["masterName"]))
+        print("{}. {} ({}) 班主任: {}".format(i + 1, classrooms[i]["classNickName"], classrooms[i]["invitationCode"], classrooms[i]["masterName"]))  # {序号}. {班级名称} ({希希号}) 班主任: {班主任姓名}
     print("0. 退出程序")
     num = int(input("请输入要查看的班级序号: ") or -1)
 
     if 0 < num <= len(classrooms):
-        students = STUDENT_FETCH_LIST(classrooms[num - 1]["classId"])
+        students = STUDENT_FETCH_LIST(classrooms[num - 1]["classId"])  # 拉取学生列表
         print("\033c", end='')
         while True:
-            print("{} ({})\n\n1. 显示所有学生\n2. 显示所有小组\n3. 查看班级报表\n0. 返回上一级".format(classrooms[num - 1]["classNickName"], classrooms[num - 1]["invitationCode"]))
+            print("{} ({})\n\n1. 显示所有学生\n2. 显示所有小组\n3. 查看班级报表\n0. 返回上一级".format(classrooms[num - 1]["classNickName"], classrooms[num - 1]["invitationCode"]))  # 显示班级名称、希希号及功能选项
             slct = int(input("请输入功能序号: ") or -1)
             if slct == 1:  # 显示所有学生
                 if (len(students) == 0):
@@ -272,39 +272,39 @@ while True:  # 等待输入正确的班级序号
                         listStudent(students, True)
                         print("\n1. 发送点评\n2. 查看班级/个人表现\n0. 返回上一级")
                         slct = int(input("请输入功能序号: ") or -1)
-                        if slct == 1:
+                        if slct == 1:  # 发送点评
                             times = 1
                             while True:
-                                sNum = int(input("请输入学生序号 [留空以进入多选模式, 输入-1以返回上一级, 输入-2以修改发送次数 (默认为1次, 当前为{}次)]: ".format(times)) or -114514)
-                                if -1 < sNum <= len(students):
-                                    medal = MEDAL_FETCH_BY_CLASSROOM(classrooms[num - 1]["classId"])
-                                    for i in range(len(medal)):
-                                        print("{}. {} {}{}分".format(i + 1, medal[i]["name"], "表扬 +" if medal[i]["type"] == 1 else "待改进 -", medal[i]["value"]))
+                                sNum = int(input("请输入学生序号 [留空以进入多选模式, 输入-1以返回上一级, 输入-2以修改发送次数 (默认为1次, 当前为{}次)]: ".format(times)) or -114514)  # 等待选择功能
+                                if -1 < sNum <= len(students):  # 输入正确的学生序号后
+                                    medal = MEDAL_FETCH_BY_CLASSROOM(classrooms[num - 1]["classId"])  # 拉取点评类型
+                                    for i in range(len(medal)):  # 列举点评类型
+                                        print("{}. {} {}{}分".format(i + 1, medal[i]["name"], "表扬 +" if medal[i]["type"] == 1 else "待改进 -", medal[i]["value"]))  # {序号}. {点评名称} {点评类型}{分数数值}分
                                     while True:
-                                        slctdMedal = int(input("请选择要发送的点评类型 (输入-1以返回上一级): ") or 0) - 1
-                                        if 0 <= slctdMedal < len(medal):
-                                            if sNum == 0:
+                                        slctdMedal = int(input("请选择要发送的点评类型 (输入-1以返回上一级): ") or 0) - 1  # 选择点评类型
+                                        if 0 <= slctdMedal < len(medal):  # 判断发送对象
+                                            if sNum == 0:  # 全班
                                                 for i in range(times):
                                                     SET_MEDAL("CLASSROOM", medal[slctdMedal]["resourceid"], '', classrooms[num - 1]["classId"])
-                                            elif 0 < sNum <= len(students):
+                                            elif 0 < sNum <= len(students):  # 个人
                                                 for i in range(times):
                                                     SET_MEDAL("STUDENT_SINGLE", medal[slctdMedal]["resourceid"], students[sNum - 1]["studentId"], '')
                                             break
-                                        elif slctdMedal == -1 - 1:
+                                        elif slctdMedal == -1 - 1:  # 返回上一级
                                             break
                                         else:
                                             print("选择的点评类型不存在, 请重试! ")
-                                elif sNum == -114514:
+                                elif sNum == -114514:  # 多选模式
                                     sNums = []
-                                    while True:
+                                    while True:  # 选中学生列表
                                         sNum = int(input("请输入第{}个学生序号 (留空以退出多选模式): ".format(len(sNums) + 1)) or -1)
                                         if 0 < sNum <= len(students):
                                             sNums.append(sNum - 1)
-                                        elif sNum == -1:
+                                        elif sNum == -1:  # 退出多选模式
                                             break
                                         else:
                                             print("输入的学生序号不存在, 请重试! ")
-                                    if len(sNums) > 0:
+                                    if len(sNums) > 0:  # 对多选序列是否存在学生进行判断，否则返回单人模式
                                         studentIds = ''
                                         for i in range(len(sNums)):
                                             studentIds += students[sNums[i]]["studentId"]
@@ -318,40 +318,40 @@ while True:  # 等待输入正确的班级序号
                                             for i in range(times):
                                                 SET_MEDAL("STUDENT_MULTI", medal[slctdMedal]["resourceid"], studentIds, '')
                                             break
-                                        elif slctdMedal == -1 - 1:
+                                        elif slctdMedal == -1 - 1:  # 返回上一级
                                             break
                                         else:
                                             print("选择的点评类型不存在, 请重试! ")
-                                elif sNum == -1:
+                                elif sNum == -1:  # 返回上一级
                                     break
-                                elif sNum == -2:
+                                elif sNum == -2:  # 修改发送次数
                                     temp = times
                                     times = int(input("请输入发送次数 (>=1): ") or 1)
-                                    if times < 1:
+                                    if times < 1:  # 对次数有效性进行判断, 若无效则恢复原次数
                                         times = temp
                                 else:
                                     print("输入的学生序号不存在, 请重试! ")
                                 break
-                        elif slct == 2:
+                        elif slct == 2:  # 查看班级/个人表现
                             while True:
                                 sNum = int(input("请输入学生序号: ") or -1)
-                                if sNum == 0:
+                                if sNum == 0:  # 班级表现
                                     classReport("class")
                                     break
-                                elif 0 < sNum <= len(students):
+                                elif 0 < sNum <= len(students):  # 个人表现
                                     classReport("student", sNum - 1)
                                     break
                                 else:
                                     print("输入的学生序号不存在, 请重试! ")
-                        elif slct == 0:
+                        elif slct == 0:  # 返回上一级
                             print("\033c", end='')
                             break
                         else:
                             print("输入的功能序号无效, 请重试! ")
-            elif slct == 2:  # 显示所有小组
+            elif slct == 2:  # 显示所有小组分组方案
                 print("\033c{} ({})\n\n".format(classrooms[num - 1]["classNickName"], classrooms[num - 1]["invitationCode"]), end='')  # 清屏并显示班级名称
                 groups = GROUP_COLLECTION_GET_LIST(classrooms[num - 1]["classId"])
-                if len(groups) == 0:  # 对是否存在小组进行判断
+                if len(groups) == 0:  # 对是否存在小组分组方案进行判断
                     print("这个班级还没有小组哦\n")
                 else:
                     for i in range(len(groups)):
