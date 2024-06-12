@@ -363,12 +363,13 @@ while True:  # 等待输入正确的班级序号
                                     break
                                 elif sNum == -2:  # 修改发送次数
                                     temp = times
-                                    times = int(input("请输入发送次数 (>=1): ") or 1)
+                                    times = int(input("请输入发送次数 (>=1): ") or 0)
                                     if times < 1:  # 对次数有效性进行判断, 若无效则恢复原次数
                                         times = temp
                                 else:
                                     print("输入的学生序号不存在, 请重试! ")
-                                break
+                                if sNum != -2:
+                                    break
                         elif slct == 2:  # 查看班级/个人表现
                             while True:
                                 sNum = int(input("请输入学生序号: ") or -1)
