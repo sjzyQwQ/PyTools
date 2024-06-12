@@ -7,32 +7,36 @@ GitHub: https://github.com/sjzyQwQ/PyTools
 
 import argparse
 import requests
+import urllib.parse
+import re
 import time
 
 parser = argparse.ArgumentParser(description="班级优化大师 CLI")
 parser.add_argument("-T", "--at", "--accessToken", dest="accessToken", required=True, metavar='', help="Cookie: accessToken")
-parser.add_argument("-t", "--ct", "--csrfToken", dest="csrfToken", metavar='', required=True, help="Header: x-csrf-token")
-parser.add_argument("-m", "--cm", "--connectMagick", dest="connectMagick", metavar='', required=True, help="Cookie: connect.magick")
 args = parser.parse_args()
+
+response = requests.get("https://care.seewo.com/app/", cookies={"accessToken": args.accessToken})
+connectMagick = urllib.parse.unquote(response.cookies["connect.magick"])
+csrfToken = re.search(r'(?<=<meta name="csrf-token" content=").*(?=" \/>)', response.text).group()
 
 
 def CLASSROOM_FETCH():  # 获取班级列表
-    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"CLASSROOM_FETCH"}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
+    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"CLASSROOM_FETCH"}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
     return response.json()["data"]["classrooms"]
 
 
 def STUDENT_FETCH_LIST(classroomId):  # 获取班级学生列表
-    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_FETCH_LIST","params":{"classroomId":"' + classroomId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
+    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_FETCH_LIST","params":{"classroomId":"' + classroomId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
     return response.json()["data"]["students"]
 
 
 def GROUP_COLLECTION_GET_LIST(classId):  # 获取班级小组列表
-    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"GROUP_COLLECTION_GET_LIST","params":{"classId":"' + classId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
+    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"GROUP_COLLECTION_GET_LIST","params":{"classId":"' + classId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
     return response.json()["data"]["classTeamPlans"]
 
 
 def CLASSROOM_FETCH_REPORT(timeline, classId, creatorId='', startTime="0", endTime="0"):  # 获取班级报表总体数据
-    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"CLASSROOM_FETCH_REPORT","params":{"timeline":' + timeline + ',"classId":"' + classId + '","classUid":"' + classId + '","creatorId":"' + creatorId + '","pageSize":2147483646,"page":1,"lastPageNum":0,"lastMinRowNum":0,"startTime":' + startTime + ',"endTime":' + endTime + ',"start":' + startTime + ',"end":' + endTime + '}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
+    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"CLASSROOM_FETCH_REPORT","params":{"timeline":' + timeline + ',"classId":"' + classId + '","classUid":"' + classId + '","creatorId":"' + creatorId + '","pageSize":2147483646,"page":1,"lastPageNum":0,"lastMinRowNum":0,"startTime":' + startTime + ',"endTime":' + endTime + ',"start":' + startTime + ',"end":' + endTime + '}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
     if response.json()["code"] == 200:
         return response.json()["data"]
     elif response.json()["code"] == 404:
@@ -40,12 +44,12 @@ def CLASSROOM_FETCH_REPORT(timeline, classId, creatorId='', startTime="0", endTi
 
 
 def CLASSROOM_FETCH_PERFORMANCE(timeline, classId, creatorId='', startTime="0", endTime="0"):  # 获取班级报表总体点评列表
-    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"CLASSROOM_FETCH_PERFORMANCE","params":{"timeline":' + timeline + ',"page":1,"pageSize":2147483646,"classId":"' + classId + '","classUid":"' + classId + '","creatorId":"' + creatorId + '","lastPageNum":0,"lastMinRowNum":0,"startTime":' + startTime + ',"endTime":' + endTime + ',"start":' + startTime + ',"end":' + endTime + '}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
+    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"CLASSROOM_FETCH_PERFORMANCE","params":{"timeline":' + timeline + ',"page":1,"pageSize":2147483646,"classId":"' + classId + '","classUid":"' + classId + '","creatorId":"' + creatorId + '","lastPageNum":0,"lastMinRowNum":0,"startTime":' + startTime + ',"endTime":' + endTime + ',"start":' + startTime + ',"end":' + endTime + '}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
     return response.json()["data"]["performances"]
 
 
 def STUDENT_FETCH_REPORT(timeline, classId, studentId, creatorId='', start="0", end="0"):  # 获取班级报表单个学生数据
-    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_FETCH_REPORT","params":{"timeline":' + timeline + ',"classId":"' + classId + '","studentId":"' + studentId + '","creatorId":"' + creatorId + '","pageSize":2147483646,"page":1,"lastPageNum":0,"lastMinRowNum":0,"start":' + start + ',"end":' + end + '}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
+    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_FETCH_REPORT","params":{"timeline":' + timeline + ',"classId":"' + classId + '","studentId":"' + studentId + '","creatorId":"' + creatorId + '","pageSize":2147483646,"page":1,"lastPageNum":0,"lastMinRowNum":0,"start":' + start + ',"end":' + end + '}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
     if response.json()["code"] == 200:
         return response.json()["data"]
     elif response.json()["code"] == 404:
@@ -53,26 +57,26 @@ def STUDENT_FETCH_REPORT(timeline, classId, studentId, creatorId='', start="0", 
 
 
 def STUDENT_FETCH_PERFORMANCE(timeline, classId, studentId, creatorId='', start="0", end="0"):  # 获取班级报表单个学生点评列表
-    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_FETCH_PERFORMANCE","params":{"timeline":' + timeline + ',"page":1,"pageSize":2147483646,"classId":"' + classId + '","studentId":"' + studentId + '","creatorId":"' + creatorId + '","lastPageNum":0,"lastMinRowNum":0,"start":' + start + ',"end":' + end + '}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
+    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_FETCH_PERFORMANCE","params":{"timeline":' + timeline + ',"page":1,"pageSize":2147483646,"classId":"' + classId + '","studentId":"' + studentId + '","creatorId":"' + creatorId + '","lastPageNum":0,"lastMinRowNum":0,"start":' + start + ',"end":' + end + '}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
     return response.json()["data"]["performances"]
 
 
 def MEDAL_FETCH_BY_CLASSROOM(cid):
-    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"MEDAL_FETCH_BY_CLASSROOM","params":{"cid":"' + cid + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
+    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"MEDAL_FETCH_BY_CLASSROOM","params":{"cid":"' + cid + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
     return response.json()["data"]
 
 
 def SET_MEDAL(type, performanceId, studentId, classId):  # 发送点评
     if type == "STUDENT_SINGLE":  # 单人
-        requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_SET_MEDAL_SINGLE","params":{"performanceId":"' + performanceId + '","studentId":"' + studentId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
+        requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_SET_MEDAL_SINGLE","params":{"performanceId":"' + performanceId + '","studentId":"' + studentId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
     elif type == "STUDENT_MULTI":  # 多人
-        requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_SET_MEDAL_MULTI","params":{"performanceId":"' + performanceId + '","studentsId":"' + studentId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})  # 用","连接多个studentId
+        requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_SET_MEDAL_MULTI","params":{"performanceId":"' + performanceId + '","studentsId":"' + studentId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})  # 用","连接多个studentId
     elif type == "CLASSROOM":  # 全班
-        requests.post("https://care.seewo.com/app/apis.json", data='{"action":"CLASSROOM_SET_MEDAL","params":{"performanceId":"' + performanceId + '","classId":"' + classId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
+        requests.post("https://care.seewo.com/app/apis.json", data='{"action":"CLASSROOM_SET_MEDAL","params":{"performanceId":"' + performanceId + '","classId":"' + classId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
 
 
 def MEDAL_PERFORMANCE_DELETE(classId, performanceDetailId, performanceType):
-    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"MEDAL_PERFORMANCE_DELETE","params":{"classId":"' + classId + '","performanceDetailId":"' + performanceDetailId + '","type":' + str(performanceType) + '}}', headers={"Content-Type": "application/json", "x-csrf-token": args.csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": args.connectMagick})
+    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"MEDAL_PERFORMANCE_DELETE","params":{"classId":"' + classId + '","performanceDetailId":"' + performanceDetailId + '","type":' + str(performanceType) + '}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
 
 
 def analyseReport(report):  # 解析获得的点评数据
