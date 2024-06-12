@@ -13,6 +13,8 @@ import time
 
 parser = argparse.ArgumentParser(description="班级优化大师 CLI")
 parser.add_argument("-T", "--at", "--accessToken", dest="accessToken", required=True, metavar='', help="Cookie: accessToken")
+parser.add_argument("-e", dest="dailyExperience", action="store_true", help="开启每日自动获取经验的功能")
+parser.add_argument("-c", dest="dailyExperienceClassroom", metavar='', help="每日自动获取经验使用的班级ClassId (若没有启用 -e 则该项无效! )")
 args = parser.parse_args()
 
 response = requests.get("https://care.seewo.com/app/", cookies={"accessToken": args.accessToken})
@@ -68,11 +70,12 @@ def MEDAL_FETCH_BY_CLASSROOM(cid):
 
 def SET_MEDAL(type, performanceId, studentId, classId):  # 发送点评
     if type == "STUDENT_SINGLE":  # 单人
-        requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_SET_MEDAL_SINGLE","params":{"performanceId":"' + performanceId + '","studentId":"' + studentId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
+        response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_SET_MEDAL_SINGLE","params":{"performanceId":"' + performanceId + '","studentId":"' + studentId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
     elif type == "STUDENT_MULTI":  # 多人
-        requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_SET_MEDAL_MULTI","params":{"performanceId":"' + performanceId + '","studentsId":"' + studentId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})  # 用","连接多个studentId
+        response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"STUDENT_SET_MEDAL_MULTI","params":{"performanceId":"' + performanceId + '","studentsId":"' + studentId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})  # 用","连接多个studentId
     elif type == "CLASSROOM":  # 全班
-        requests.post("https://care.seewo.com/app/apis.json", data='{"action":"CLASSROOM_SET_MEDAL","params":{"performanceId":"' + performanceId + '","classId":"' + classId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
+        response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"CLASSROOM_SET_MEDAL","params":{"performanceId":"' + performanceId + '","classId":"' + classId + '"}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
+    return response.json()["data"]
 
 
 def MEDAL_PERFORMANCE_DELETE(classId, performanceDetailId, performanceType):
@@ -82,6 +85,18 @@ def MEDAL_PERFORMANCE_DELETE(classId, performanceDetailId, performanceType):
 def showAccountInfo():
     response = requests.get("https://care.seewo.com/app/user/info.json", cookies={"accessToken": args.accessToken})
     print("姓名: {}\t昵称: {}\n学段: {}\t学科: {}\n手机号: {}\n注册时间: {}\nToken: {}".format(response.json()["data"]["realName"], response.json()["data"]["nickName"], response.json()["data"]["stageName"], response.json()["data"]["subjectName"], response.json()["data"]["phone"], time.strftime("%Y年%m月%d日%H时%M分%S秒", time.localtime(response.json()["data"]["createTime"] / 1000)), response.json()["data"]["tokenId"]))
+
+
+def ecDailyExperience():
+    medal = MEDAL_FETCH_BY_CLASSROOM(args.dailyExperienceClassroom)
+    print("拉取点评列表中……")
+    for i in range(15):
+        performance = SET_MEDAL("CLASSROOM", medal[0]["resourceid"], '', args.dailyExperienceClassroom)
+        print("正在发送第{}个点评……".format(i + 1))
+        performanceType = CLASSROOM_FETCH_PERFORMANCE("1", args.dailyExperienceClassroom)[0]["from"]["type"]
+        print("正在检查第{}个点评的类型……".format(i + 1))
+        MEDAL_PERFORMANCE_DELETE(args.dailyExperienceClassroom, performance["performanceDetailId"], performanceType if performanceType != 0 else 3)
+        print("正在删除第{}个点评……".format(i + 1))
 
 
 def en5UserInfo():
@@ -185,7 +200,7 @@ def classReport(referer="", sNum=0):
                         if slct == 2:
                             slct = int(input("请输入要删除的点评记录: ")) - 1
                             if performance[slct]["from"]["type"] == 0:
-                                MEDAL_PERFORMANCE_DELETE(classrooms[num - 1]["classId"], performance[slct]["resourceid"], "3")
+                                MEDAL_PERFORMANCE_DELETE(classrooms[num - 1]["classId"], performance[slct]["resourceid"], 3)
                             else:
                                 MEDAL_PERFORMANCE_DELETE(classrooms[num - 1]["classId"], performance[slct]["from"]["relativeId"], performance[i]["from"]["type"])
                     elif slct == 3:
@@ -196,7 +211,7 @@ def classReport(referer="", sNum=0):
                         if decision.lower() == 'y':
                             for i in range(len(performance)):
                                 if performance[i]["from"]["type"] == 0:
-                                    MEDAL_PERFORMANCE_DELETE(classrooms[num - 1]["classId"], performance[i]["resourceid"], "3")
+                                    MEDAL_PERFORMANCE_DELETE(classrooms[num - 1]["classId"], performance[i]["resourceid"], 3)
                                 else:
                                     MEDAL_PERFORMANCE_DELETE(classrooms[num - 1]["classId"], performance[i]["from"]["relativeId"], performance[i]["from"]["type"])
                             break
@@ -277,6 +292,16 @@ def classReport(referer="", sNum=0):
             else:
                 print("输入的功能序号无效, 请重试! ")
 
+
+if args.dailyExperience == True:
+    if args.dailyExperienceClassroom == None:
+        args.dailyExperienceClassroom = input("请输入每日自动获取经验使用的班级ClassId: ")
+    while True:
+        print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        ecDailyExperience()
+        en5SignLottery()
+        print("本次运行结束, 下次运行将在{}! ".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time() + 86400 - (time.time() + 86400) % 86400))))
+        time.sleep(86400 - (time.time() + 86400) % 86400)
 
 while True:  # 等待输入正确的班级序号
     print("\033c", end='')  # 清屏
