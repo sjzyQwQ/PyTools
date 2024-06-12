@@ -76,7 +76,35 @@ def SET_MEDAL(type, performanceId, studentId, classId):  # 发送点评
 
 
 def MEDAL_PERFORMANCE_DELETE(classId, performanceDetailId, performanceType):
-    response = requests.post("https://care.seewo.com/app/apis.json", data='{"action":"MEDAL_PERFORMANCE_DELETE","params":{"classId":"' + classId + '","performanceDetailId":"' + performanceDetailId + '","type":' + str(performanceType) + '}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
+    requests.post("https://care.seewo.com/app/apis.json", data='{"action":"MEDAL_PERFORMANCE_DELETE","params":{"classId":"' + classId + '","performanceDetailId":"' + performanceDetailId + '","type":' + str(performanceType) + '}}', headers={"Content-Type": "application/json", "x-csrf-token": csrfToken}, cookies={"accessToken": args.accessToken, "connect.magick": connectMagick})
+
+
+def showAccountInfo():
+    response = requests.get("https://care.seewo.com/app/user/info.json", cookies={"accessToken": args.accessToken})
+    print("姓名: {}\t昵称: {}\n学段: {}\t学科: {}\n手机号: {}\n注册时间: {}\nToken: {}".format(response.json()["data"]["realName"], response.json()["data"]["nickName"], response.json()["data"]["stageName"], response.json()["data"]["subjectName"], response.json()["data"]["phone"], time.strftime("%Y年%m月%d日%H时%M分%S秒", time.localtime(response.json()["data"]["createTime"] / 1000)), response.json()["data"]["tokenId"]))
+
+
+def en5UserInfo():
+    response = requests.get("https://easinote.seewo.com/embedpc/com/apis", "api=MISSION_USER_INFO", cookies={"x-auth-token": args.accessToken})
+    size = response.json()["data"]["cloudSize"]
+    units = ['B', "KB", "MB", "GB"]
+    times = 0
+    while True:
+        if size / 1024 > 1:
+            size /= 1024
+            times += 1
+            if times == 3:
+                break
+    print("云空间: {}{}\t{}会员 Lv{}\t距离升级还差{}经验值".format(size, units[times], response.json()["data"]["userSan"], response.json()["data"]["level"], response.json()["data"]["levelMilestones"][2]["experience"] - response.json()["data"]["experience"]))
+
+
+def en5SignLottery():  # 希沃白板签到
+    response = requests.get("https://easinote.seewo.com/embedpc/com/apis", "api=MISSION_TODAY_RECORD", cookies={"x-auth-token": args.accessToken})
+    if response.json()["data"]["signRecord"]["beenSigned"] == True:
+        print("希沃白板今日已签到, 当前连续签到第{}天, 获得{}和{}".format(response.json()["data"]["signRecord"]["currentDay"], response.json()["data"]["signRecord"]["prizeName"], response.json()["data"]["lotteryRecord"]["prizeName"]))
+    else:
+        response = requests.get("https://easinote.seewo.com/embedpc/com/apis", "api=MISSION_SIGN_LOTTERY", cookies={"x-auth-token": args.accessToken})
+        print("已为您在希沃白板签到, 当前连续签到第{}天, 获得{}和{}".format(response.json()["data"]["signRecord"]["currentDay"], response.json()["data"]["signRecord"]["prizeName"], response.json()["data"]["lotteryRecord"]["prizeName"]))
 
 
 def analyseReport(report):  # 解析获得的点评数据
@@ -252,6 +280,11 @@ def classReport(referer="", sNum=0):
 
 while True:  # 等待输入正确的班级序号
     print("\033c", end='')  # 清屏
+    showAccountInfo()
+    print("----------")
+    en5UserInfo()
+    en5SignLottery()
+    print("----------")
 
     classrooms = CLASSROOM_FETCH()  # 拉取班级列表
 
