@@ -1,25 +1,46 @@
 '''
 EasiCare CLI
 This Python file is edited by Misaka10072
-Last modified: 2024/6/12
+Last modified: 2024/6/13
 GitHub: https://github.com/sjzyQwQ/PyTools
 '''
 
 import argparse
 import requests
 import urllib.parse
+import uuid
+import getpass
+import hashlib
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_v1_5
+import base64
 import re
 import time
 
 parser = argparse.ArgumentParser(description="班级优化大师 CLI")
-parser.add_argument("-T", "--at", "--accessToken", dest="accessToken", required=True, metavar='', help="Cookie: accessToken")
+parser.add_argument("-p", "--password", dest="passwordLogin", action="store_true", help="使用密码登录")
+parser.add_argument("-T", "--accessToken", dest="accessToken", metavar='', help="使用accessToken (Cookie) 登录 (启用 -p 时本项无效! )")
 parser.add_argument("-e", dest="dailyExperience", action="store_true", help="开启每日自动获取经验的功能")
 parser.add_argument("-c", dest="dailyExperienceClassroom", metavar='', help="每日自动获取经验使用的班级ClassId (若没有启用 -e 则该项无效! )")
 args = parser.parse_args()
 
-response = requests.get("https://care.seewo.com/app/", cookies={"accessToken": args.accessToken})
-connectMagick = urllib.parse.unquote(response.cookies["connect.magick"])
-csrfToken = re.search(r'(?<=<meta name="csrf-token" content=").*(?=" \/>)', response.text).group()
+if args.passwordLogin == True:
+    username = input("请输入手机/邮箱/用户名: ")
+    password = getpass.getpass("请输入密码: ")
+    dataId = uuid.uuid4()
+    pubkey = PKCS1_v1_5.new(RSA.importKey("-----BEGIN RSA PUBLIC KEY-----\n" + requests.post("https://id.seewo.com/common/getPublicKeyV3", data="dataId=" + str(dataId), headers={"Content-Type": "application/x-www-form-urlencoded"}).json()["data"] + "\n-----END RSA PUBLIC KEY-----"))
+    username = base64.b64encode(pubkey.encrypt(username.encode(encoding="utf-8"))).decode()
+    password = base64.b64encode(pubkey.encrypt(hashlib.md5(password.encode(encoding="utf-8")).hexdigest().encode(encoding="utf-8"))).decode()
+    response = requests.post("https://id.seewo.com/login/v3", data="dataId=" + str(dataId) + "&username=" + username + "&password=" + password, headers={"Content-Type": "application/x-www-form-urlencoded"})
+    print(response.json())
+    time.sleep(60)
+elif args.accessToken != None:
+    response = requests.get("https://care.seewo.com/app/", cookies={"accessToken": args.accessToken})
+    connectMagick = urllib.parse.unquote(response.cookies["connect.magick"])
+    csrfToken = re.search(r'(?<=<meta name="csrf-token" content=").*(?=" \/>)', response.text).group()
+else:
+    print("未登录 (请输入 -T 以使用accessToken登录)")
+    exit()
 
 
 def CLASSROOM_FETCH():  # 获取班级列表
