@@ -5,6 +5,7 @@ Last modified: 2024/6/15
 GitHub: https://github.com/sjzyQwQ/PyTools
 '''
 
+import os
 import json
 import time
 import datetime
@@ -29,7 +30,7 @@ def generateTimetable():
     for num in range(len(classTime)):
         Second = {"Start": time.strptime(currentTimeLayout[classTime[num]]["StartSecond"], "%Y-%m-%dT%H:%M:%S+08:00"), "End": time.strptime(currentTimeLayout[classTime[num]]["EndSecond"], "%Y-%m-%dT%H:%M:%S+08:00")}
         currentSubject = Profiles["Subjects"][currentClassPlan["Classes"][num]["SubjectId"]]
-        newLesson(Weekday[currentClassPlan["TimeRule"]["WeekDay"]], currentSubject["Name"], time.strftime("%H:%M:%S", Second["Start"]), time.strftime("%H:%M:%S", Second["End"]), True if IsSplit[num] else False)
+        newLesson(Weekday[currentClassPlan["TimeRule"]["WeekDay"]], currentSubject["Name"], time.strftime("%H:%M:%S", Second["Start"]), time.strftime("%H:%M:%S", Second["End"]), IsSplit[num])
 
 
 def save(mode):
@@ -45,15 +46,15 @@ except FileNotFoundError:
 finally:
     file.close()
 
-SelectedProfile = Settings["SelectedProfile"]
+with open("{}/ClassIsland/Management/Settings.json".format(os.getenv("LOCALAPPDATA"))) as file:
+    ManagementSettings = json.load(file)
+
+SelectedProfile = "_management-profile.json" if ManagementSettings["IsManagementEnabled"] else Settings["SelectedProfile"]
 SingleWeekStartTime = time.strptime(Settings["SingleWeekStartTime"], "%Y-%m-%dT%H:%M:%S")
 
-if (datetime.date.today() - datetime.date(SingleWeekStartTime[0], SingleWeekStartTime[1], SingleWeekStartTime[2])).days % 14 < 7:  # 相对单周
-    IsSingleWeek = True
-else:  # 相对双周 (datetime.date.today()-datetime.date(SingleWeekStartTime[0],SingleWeekStartTime[1],SingleWeekStartTime[2])).days%14>7
-    IsSingleWeek = False
+IsSingleWeek = (datetime.date.today() - datetime.date(SingleWeekStartTime[0], SingleWeekStartTime[1], SingleWeekStartTime[2])).days % 14 < 7
 
-with open("Profiles/" + SelectedProfile) as file:
+with open("Profiles/{}".format(SelectedProfile)) as file:
     Profiles = json.load(file)
 
 Timetable = {"Monday": [], "Tuesday": [], "Wednesday": [], "Thursday": [], "Friday": [], "Saturday": [], "Sunday": [], "Temp": []}
