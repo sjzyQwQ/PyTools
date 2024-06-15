@@ -70,7 +70,7 @@ try:
     save("x")
 except FileExistsError:
     while True:
-        option = input("文件已存在，是否覆盖保存 (y/N): ")
+        option = input("文件已存在，是否覆盖保存 (y/N): ") or 'N'
         if option.lower() == 'y':
             save("w")
             break
