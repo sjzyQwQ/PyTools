@@ -1,7 +1,7 @@
 '''
 ClassIsland to ZongziTek 黑板贴
 This Python file is edited by Misaka10072
-Last modified: 2024/6/15
+Last modified: 2024/6/22
 GitHub: https://github.com/sjzyQwQ/PyTools
 '''
 
@@ -28,7 +28,7 @@ def generateTimetable():
         elif currentTimeLayout[num]["TimeType"] == 2:
             IsSplit[len(classTime) - 1] = True
     for num in range(len(classTime)):
-        Second = {"Start": time.strptime(currentTimeLayout[classTime[num]]["StartSecond"], "%Y-%m-%dT%H:%M:%S+08:00"), "End": time.strptime(currentTimeLayout[classTime[num]]["EndSecond"], "%Y-%m-%dT%H:%M:%S+08:00")}
+        Second = {"Start": time.strptime(currentTimeLayout[classTime[num]]["StartSecond"][:19], "%Y-%m-%dT%H:%M:%S"), "End": time.strptime(currentTimeLayout[classTime[num]]["EndSecond"][:19], "%Y-%m-%dT%H:%M:%S")}
         currentSubject = Profiles["Subjects"][currentClassPlan["Classes"][num]["SubjectId"]]
         newLesson(Weekday[currentClassPlan["TimeRule"]["WeekDay"]], currentSubject["Name"], time.strftime("%H:%M:%S", Second["Start"]), time.strftime("%H:%M:%S", Second["End"]), IsSplit[num])
 
@@ -50,7 +50,7 @@ with open("{}/ClassIsland/Management/Settings.json".format(os.getenv("LOCALAPPDA
     ManagementSettings = json.load(file)
 
 SelectedProfile = "_management-profile.json" if ManagementSettings["IsManagementEnabled"] else Settings["SelectedProfile"]
-SingleWeekStartTime = time.strptime(Settings["SingleWeekStartTime"], "%Y-%m-%dT%H:%M:%S")
+SingleWeekStartTime = time.strptime(Settings["SingleWeekStartTime"][:19], "%Y-%m-%dT%H:%M:%S")
 
 IsSingleWeek = (datetime.date.today() - datetime.date(SingleWeekStartTime[0], SingleWeekStartTime[1], SingleWeekStartTime[2])).days % 14 < 7
 
