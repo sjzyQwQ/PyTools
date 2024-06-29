@@ -5,10 +5,15 @@ Last modified: 2024/6/22
 GitHub: https://github.com/sjzyQwQ/PyTools
 '''
 
+import argparse
 import os
 import json
 import time
 import datetime
+
+parser = argparse.ArgumentParser(description="ClassIsland to ZongziTek 黑板贴")
+parser.add_argument("-y","--allow-rewrite-when-file-exist",dest="IsRewriteAllowed",action="store_true",help="在文件存在时允许覆盖保存")
+args = parser.parse_args()
 
 Weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -71,8 +76,9 @@ try:
     save("x")
 except FileExistsError:
     while True:
-        option = input("文件已存在，是否覆盖保存 (y/N): ") or 'N'
-        if option.lower() == 'y':
+        if not args.IsRewriteAllowed:
+            option = input("文件已存在，是否覆盖保存 (y/N): ") or 'N'
+        if args.IsRewriteAllowed or option.lower() == 'y':
             save("w")
             break
         elif option.lower() == 'n':
