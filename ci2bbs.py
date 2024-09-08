@@ -1,7 +1,7 @@
 '''
 ClassIsland to ZongziTek 黑板贴
 This Python file is edited by Misaka10072
-Last modified: 2024/6/22
+Last modified: 2024/9/9
 GitHub: https://github.com/sjzyQwQ/PyTools
 '''
 
@@ -34,8 +34,9 @@ def generateTimetable():
             IsSplit[len(classTime) - 1] = True
     for num in range(len(classTime)):
         Second = {"Start": time.strptime(currentTimeLayout[classTime[num]]["StartSecond"][:19], "%Y-%m-%dT%H:%M:%S"), "End": time.strptime(currentTimeLayout[classTime[num]]["EndSecond"][:19], "%Y-%m-%dT%H:%M:%S")}
-        currentSubject = Profiles["Subjects"][currentClassPlan["Classes"][num]["SubjectId"]]
-        newLesson(Weekday[currentClassPlan["TimeRule"]["WeekDay"]], currentSubject["Name"], time.strftime("%H:%M:%S", Second["Start"]), time.strftime("%H:%M:%S", Second["End"]), IsSplit[num])
+        if currentClassPlan["Classes"][num]["SubjectId"] != '':
+            currentSubject = Profiles["Subjects"][currentClassPlan["Classes"][num]["SubjectId"]]
+            newLesson(Weekday[currentClassPlan["TimeRule"]["WeekDay"]], currentSubject["Name"], time.strftime("%H:%M:%S", Second["Start"]), time.strftime("%H:%M:%S", Second["End"]), IsSplit[num])
 
 
 def save(mode):
