@@ -12,7 +12,7 @@ import time
 import datetime
 
 parser = argparse.ArgumentParser(description="ClassIsland to ZongziTek 黑板贴")
-parser.add_argument("-y","--allow-rewrite-when-file-exist",dest="IsRewriteAllowed",action="store_true",help="在文件存在时允许覆盖保存")
+parser.add_argument("-y", "--allow-rewrite-when-file-exist", dest="IsRewriteAllowed", action="store_true", help="在文件存在时允许覆盖保存")
 args = parser.parse_args()
 
 Weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -58,7 +58,7 @@ with open("{}/ClassIsland/Management/Settings.json".format(os.getenv("LOCALAPPDA
 SelectedProfile = "_management-profile.json" if ManagementSettings["IsManagementEnabled"] else Settings["SelectedProfile"]
 SingleWeekStartTime = time.strptime(Settings["SingleWeekStartTime"][:19], "%Y-%m-%dT%H:%M:%S")
 
-IsSingleWeek = (datetime.date.today() - datetime.date(SingleWeekStartTime[0], SingleWeekStartTime[1], SingleWeekStartTime[2])).days % 14 < 7
+WeekCount = [((datetime.date.today() - datetime.date(SingleWeekStartTime[0], SingleWeekStartTime[1], SingleWeekStartTime[2])).days - 1) % 28 // 7 + 1, ((datetime.date.today() - datetime.date(SingleWeekStartTime[0], SingleWeekStartTime[1], SingleWeekStartTime[2])).days - 1) % 21 // 7 + 1]
 
 with open("Profiles/{}".format(SelectedProfile)) as file:
     Profiles = json.load(file)
@@ -68,10 +68,15 @@ Timetable = {"Monday": [], "Tuesday": [], "Wednesday": [], "Thursday": [], "Frid
 for id in Profiles["ClassPlans"]:
     currentClassPlan = Profiles["ClassPlans"][id]
     if currentClassPlan["IsEnabled"]:
-        if IsSingleWeek and currentClassPlan["TimeRule"]["WeekCountDiv"] in [0, 1]:  # 相对单周
+        if currentClassPlan["TimeRule"]["WeekCountDiv"] == 0:
             generateTimetable()
-        elif not IsSingleWeek and currentClassPlan["TimeRule"]["WeekCountDiv"] in [0, 2]:  # 相对双周
-            generateTimetable()
+        else:
+            if currentClassPlan["TimeRule"]["WeekCountDivTotal"] == 2 and currentClassPlan["TimeRule"]["WeekCountDiv"] == (WeekCount[0] + 1) % 2 + 1:
+                generateTimetable()
+            elif currentClassPlan["TimeRule"]["WeekCountDivTotal"] == 3 and currentClassPlan["TimeRule"]["WeekCountDiv"] == WeekCount[1]:
+                generateTimetable()
+            elif currentClassPlan["TimeRule"]["WeekCountDivTotal"] == 4 and currentClassPlan["TimeRule"]["WeekCountDiv"] == WeekCount[0]:
+                generateTimetable()
 
 try:
     save("x")
