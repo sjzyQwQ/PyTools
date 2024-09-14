@@ -1,7 +1,7 @@
 '''
 ClassIsland to ZongziTek 黑板贴
 This Python file is edited by Misaka10072
-Last modified: 2024/9/9
+Last modified: 2024/9/14
 GitHub: https://github.com/sjzyQwQ/PyTools
 '''
 
@@ -12,10 +12,10 @@ import time
 import datetime
 
 parser = argparse.ArgumentParser(description="ClassIsland to ZongziTek 黑板贴")
-parser.add_argument("-y", "--allow-rewrite-when-file-exist", dest="IsRewriteAllowed", action="store_true", help="在文件存在时允许覆盖保存")
+parser.add_argument("-y", "--allow-rewrite-when-file-exists", dest="IsRewriteAllowed", action="store_true", help="在文件存在时允许覆盖保存")
 args = parser.parse_args()
 
-Weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+Weekday = [["Sunday", ''], ["Monday", ''], ["Tuesday", ''], ["Wednesday", ''], ["Thursday", ''], ["Friday", ''], ["Saturday", ''], ["Sunday", '']]
 
 
 def newLesson(day: str, Subject: str, StartTime: str, EndTime: str, IsSplitBelow: bool = False, IsStrongClassOverNotificationEnabled: bool = False):
@@ -24,19 +24,23 @@ def newLesson(day: str, Subject: str, StartTime: str, EndTime: str, IsSplitBelow
 
 def generateTimetable():
     currentTimeLayout = Profiles["TimeLayouts"][currentClassPlan["TimeLayoutId"]]["Layouts"]
-    classTime = []
-    IsSplit = []
-    for num in range(len(currentTimeLayout)):
-        if currentTimeLayout[num]["TimeType"] == 0:
-            classTime.append(num)
-            IsSplit.append(False)
-        elif currentTimeLayout[num]["TimeType"] == 2:
-            IsSplit[len(classTime) - 1] = True
-    for num in range(len(classTime)):
-        Second = {"Start": time.strptime(currentTimeLayout[classTime[num]]["StartSecond"][:19], "%Y-%m-%dT%H:%M:%S"), "End": time.strptime(currentTimeLayout[classTime[num]]["EndSecond"][:19], "%Y-%m-%dT%H:%M:%S")}
-        if currentClassPlan["Classes"][num]["SubjectId"] != '':
-            currentSubject = Profiles["Subjects"][currentClassPlan["Classes"][num]["SubjectId"]]
-            newLesson(Weekday[currentClassPlan["TimeRule"]["WeekDay"]], currentSubject["Name"], time.strftime("%H:%M:%S", Second["Start"]), time.strftime("%H:%M:%S", Second["End"]), IsSplit[num])
+    if Timetable[Weekday[currentClassPlan["TimeRule"]["WeekDay"]][0]] == []:
+        classTime = []
+        IsSplit = []
+        for num in range(len(currentTimeLayout)):
+            if currentTimeLayout[num]["TimeType"] == 0:
+                classTime.append(num)
+                IsSplit.append(False)
+            elif currentTimeLayout[num]["TimeType"] == 2:
+                IsSplit[len(classTime) - 1] = True
+        for num in range(len(classTime)):
+            Second = {"Start": time.strptime(currentTimeLayout[classTime[num]]["StartSecond"][:19], "%Y-%m-%dT%H:%M:%S"), "End": time.strptime(currentTimeLayout[classTime[num]]["EndSecond"][:19], "%Y-%m-%dT%H:%M:%S")}
+            if currentClassPlan["Classes"][num]["SubjectId"] != '':
+                currentSubject = Profiles["Subjects"][currentClassPlan["Classes"][num]["SubjectId"]]
+                newLesson(Weekday[currentClassPlan["TimeRule"]["WeekDay"]][0], currentSubject["Name"], time.strftime("%H:%M:%S", Second["Start"]), time.strftime("%H:%M:%S", Second["End"]), IsSplit[num])
+    elif Weekday[currentClassPlan["TimeRule"]["WeekDay"]][1] != currentClassPlan["AssociatedGroup"] and currentClassPlan["AssociatedGroup"] == Profiles["TempClassPlanGroupId"]:
+        Timetable[Weekday[currentClassPlan["TimeRule"]["WeekDay"]][0]] = []
+        generateTimetable()
 
 
 def save(mode):
@@ -55,7 +59,7 @@ finally:
 with open("{}/ClassIsland/Management/Settings.json".format(os.getenv("LOCALAPPDATA"))) as file:
     ManagementSettings = json.load(file)
 
-SelectedProfile = "_management-profile.json" if ManagementSettings["IsManagementEnabled"] else Settings["SelectedProfile"]
+SelectedProfile = "_management-profile.json" if ManagementSettings["IsManagementEnabled"] else Settings["SelectedProfile"]  # 判断是否已加入管理
 SingleWeekStartTime = time.strptime(Settings["SingleWeekStartTime"][:19], "%Y-%m-%dT%H:%M:%S")
 
 WeekCount = [((datetime.date.today() - datetime.date(SingleWeekStartTime[0], SingleWeekStartTime[1], SingleWeekStartTime[2])).days - 1) % 28 // 7 + 1, ((datetime.date.today() - datetime.date(SingleWeekStartTime[0], SingleWeekStartTime[1], SingleWeekStartTime[2])).days - 1) % 21 // 7 + 1]
@@ -65,17 +69,22 @@ with open("Profiles/{}".format(SelectedProfile)) as file:
 
 Timetable = {"Monday": [], "Tuesday": [], "Wednesday": [], "Thursday": [], "Friday": [], "Saturday": [], "Sunday": [], "Temp": []}
 
+Groups = []
+if Profiles["IsTempClassPlanGroupEnabled"] == False or Profiles["TempClassPlanGroupType"] == 1:
+    Groups.append(Profiles["SelectedClassPlanGroupId"])
+if Profiles["IsTempClassPlanGroupEnabled"] == True:
+    Groups.append(Profiles["TempClassPlanGroupId"])
 for id in Profiles["ClassPlans"]:
     currentClassPlan = Profiles["ClassPlans"][id]
-    if currentClassPlan["IsEnabled"]:
+    if currentClassPlan["IsEnabled"] and currentClassPlan["AssociatedGroup"] in Groups:
         if currentClassPlan["TimeRule"]["WeekCountDiv"] == 0:
             generateTimetable()
         else:
-            if currentClassPlan["TimeRule"]["WeekCountDivTotal"] == 2 and currentClassPlan["TimeRule"]["WeekCountDiv"] == (WeekCount[0] + 1) % 2 + 1:
+            if currentClassPlan["TimeRule"]["WeekCountDivTotal"] == 2 and currentClassPlan["TimeRule"]["WeekCountDiv"] == (WeekCount[0] + 1) % 2 + 1:  # 两周轮换
                 generateTimetable()
-            elif currentClassPlan["TimeRule"]["WeekCountDivTotal"] == 3 and currentClassPlan["TimeRule"]["WeekCountDiv"] == WeekCount[1]:
+            elif currentClassPlan["TimeRule"]["WeekCountDivTotal"] == 3 and currentClassPlan["TimeRule"]["WeekCountDiv"] == WeekCount[1]:  # 三周轮换
                 generateTimetable()
-            elif currentClassPlan["TimeRule"]["WeekCountDivTotal"] == 4 and currentClassPlan["TimeRule"]["WeekCountDiv"] == WeekCount[0]:
+            elif currentClassPlan["TimeRule"]["WeekCountDivTotal"] == 4 and currentClassPlan["TimeRule"]["WeekCountDiv"] == WeekCount[0]:  # 四周轮换
                 generateTimetable()
 
 try:
