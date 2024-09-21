@@ -24,7 +24,7 @@ def newLesson(day: str, Subject: str, StartTime: str, EndTime: str, IsSplitBelow
 
 def generateTimetable():
     currentTimeLayout = Profiles["TimeLayouts"][currentClassPlan["TimeLayoutId"]]["Layouts"]
-    if Timetable[Weekday[currentClassPlan["TimeRule"]["WeekDay"]][0]] == []:
+    if Timetable[Weekday[currentClassPlan["TimeRule"]["WeekDay"]][0]] == [] or currentClassPlan["IsOverlay"]:
         classTime = []
         IsSplit = []
         for num in range(len(currentTimeLayout)):
@@ -37,7 +37,10 @@ def generateTimetable():
             Second = {"Start": time.strptime(currentTimeLayout[classTime[num]]["StartSecond"][:19], "%Y-%m-%dT%H:%M:%S"), "End": time.strptime(currentTimeLayout[classTime[num]]["EndSecond"][:19], "%Y-%m-%dT%H:%M:%S")}
             if currentClassPlan["Classes"][num]["SubjectId"] != '':
                 currentSubject = Profiles["Subjects"][currentClassPlan["Classes"][num]["SubjectId"]]
-                newLesson(Weekday[currentClassPlan["TimeRule"]["WeekDay"]][0], currentSubject["Name"], time.strftime("%H:%M:%S", Second["Start"]), time.strftime("%H:%M:%S", Second["End"]), IsSplit[num])
+                if not currentClassPlan["IsOverlay"]:
+                    newLesson(Weekday[currentClassPlan["TimeRule"]["WeekDay"]][0], currentSubject["Name"], time.strftime("%H:%M:%S", Second["Start"]), time.strftime("%H:%M:%S", Second["End"]), IsSplit[num])
+                elif currentClassPlan["IsOverlay"]:
+                    newLesson("Temp", currentSubject["Name"], time.strftime("%H:%M:%S", Second["Start"]), time.strftime("%H:%M:%S", Second["End"]), IsSplit[num])
     elif Weekday[currentClassPlan["TimeRule"]["WeekDay"]][1] != currentClassPlan["AssociatedGroup"] and currentClassPlan["AssociatedGroup"] == Profiles["TempClassPlanGroupId"]:
         Timetable[Weekday[currentClassPlan["TimeRule"]["WeekDay"]][0]] = []
         generateTimetable()
